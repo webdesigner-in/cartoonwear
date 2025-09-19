@@ -118,7 +118,7 @@ export default function ProductsPage() {
       setProducts(mockProducts)
       setLoading(false)
     }, 1000)
-  }, [])
+  }, [mockProducts])
 
   const categories = ['All', 'Baby Items', 'Home Decor', 'Accessories', 'Toys', 'Kitchen']
 

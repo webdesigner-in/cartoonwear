@@ -37,7 +37,7 @@ export default function AboutPage() {
             <p className="text-gray-300 leading-relaxed font-medium">
               From delicate baby blankets that welcome new life to cozy home décor items that transform 
               living spaces, each creation represents hours of careful craftsmanship and genuine care for 
-              our customers' happiness.
+              our customers happiness.
             </p>
           </div>
           

@@ -13,7 +13,7 @@ export default function ContactPage() {
             Get in Touch
           </h1>
           <p className="text-lg text-gray-900 max-w-2xl mx-auto font-medium">
-            Have questions about our products or need a custom order? We'd love to hear from you!
+            Have questions about our products or need a custom order? We would love to hear from you!
           </p>
         </div>
 
@@ -51,8 +51,8 @@ export default function ContactPage() {
                 Custom Orders
               </h3>
               <p className="text-gray-900 text-sm font-medium">
-                Looking for something specific? We love creating custom pieces! Whether it's a special color, 
-                size, or design, let us know what you have in mind and we'll work with you to bring it to life.
+                Looking for something specific? We love creating custom pieces! Whether it is a special color, 
+                size, or design, let us know what you have in mind and we will work with you to bring it to life.
               </p>
             </div>
           </div>
