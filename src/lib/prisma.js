@@ -3,35 +3,25 @@ import { PrismaClient } from '@prisma/client'
 // Global variable to store the Prisma client instance
 const globalForPrisma = globalThis
 
-// Initialize Prisma client with retry logic and better error handling
+// Initialize Prisma client with better error handling
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query'] : ['error'],
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
-    },
-  },
-  transactionOptions: {
-    timeout: 20000, // 20 seconds
-  },
 })
 
-// Add connection retry logic
-prisma.$use(async (params, next) => {
-  let retries = 3;
-  while (retries > 0) {
+// Connection helper with retry logic
+export async function withRetry(operation, retries = 3) {
+  for (let i = 0; i < retries; i++) {
     try {
-      return await next(params);
+      return await operation();
     } catch (error) {
-      retries--;
-      if (retries === 0 || !error.message?.includes('timeout') && !error.message?.includes('connection')) {
+      if (i === retries - 1) throw error;
+      if (!error.message?.includes('timeout') && !error.message?.includes('connection')) {
         throw error;
       }
-      // Wait before retry
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
-});
+}
 
 // In development, save the Prisma instance to prevent hot reload issues
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
