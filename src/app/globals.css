@@ -1,22 +1,28 @@
 @import "tailwindcss";
 
 :root {
-  /* Calm, soothing color palette */
-  --background: #fefdfb; /* Off-white with warm undertone */
-  --foreground: #1a202c; /* Darker gray for better contrast */
-  --primary: #f7e6c4; /* Light cream/yellow */
-  --primary-hover: #f0d9a8; /* Slightly deeper cream */
-  --secondary: #e8e1d8; /* Warm light beige */
-  --accent: #d69e2e; /* Golden yellow accent */
-  --accent-light: #faf1e4; /* Very light yellow */
-  --border: #e8dcc0; /* Soft cream border */
-  --text-muted: #4a5568; /* Darker gray for better readability */
-  --success: #68d391; /* Soft green */
-  --warning: #f6e05e; /* Soft yellow warning */
-  --error: #fc8181; /* Soft red */
+  /* Warm, cozy color palette with off-white and golden yellow */
+  --background: #fefdfb; /* Warm off-white background */
+  --foreground: #2d1b0e; /* Dark brown for excellent contrast */
+  --primary: #fef3e2; /* Light golden cream */
+  --primary-hover: #fed7aa; /* Warmer golden cream */
+  --secondary: #fffbf0; /* Very light warm white */
+  --accent: #f59e0b; /* Beautiful golden yellow */
+  --accent-light: #fef3c7; /* Light golden background */
+  --accent-dark: #d97706; /* Darker golden yellow */
+  --border: #e5e7eb; /* Soft neutral border */
+  --text-muted: #6b5b47; /* Warm brown for secondary text */
+  --success: #10b981; /* Fresh green */
+  --warning: #f59e0b; /* Golden yellow warning */
+  --error: #ef4444; /* Warm red */
   --card-background: #ffffff;
-  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.02);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  
+  /* Dark sections with warm browns */
+  --dark-bg: #3e2723; /* Warm dark brown */
+  --dark-text: #fef3e2; /* Warm light text */
+  --dark-border: #5d4e37; /* Brown border */
 }
 
 @theme inline {
@@ -36,39 +42,74 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   
-  /* Custom colors for Tailwind */
+  /* Warm, cozy colors for better aesthetics */
   --color-cream-50: #fefdfb;
-  --color-cream-100: #f7e6c4;
-  --color-cream-200: #f0d9a8;
-  --color-cream-300: #e8dcc0;
-  --color-warm-50: #faf1e4;
-  --color-warm-100: #e8e1d8;
-  --color-golden: #d69e2e;
-  --color-soft-gray: #718096;
+  --color-cream-100: #fef3e2;
+  --color-cream-200: #fed7aa;
+  --color-cream-300: #fdba74;
+  --color-warm-50: #fffbf0;
+  --color-warm-100: #fef3c7;
+  --color-golden: #f59e0b;
+  --color-golden-dark: #d97706;
+  --color-soft-gray: #6b5b47;
+  
+  /* Dark theme colors */
+  --color-dark-bg: var(--dark-bg);
+  --color-dark-text: var(--dark-text);
+  --color-dark-border: var(--dark-border);
 }
 
-/* Dark mode - keeping the same soothing approach */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #1a1a1a;
-    --foreground: #f5f5f4;
-    --primary: #4a3f33;
-    --primary-hover: #5a4d3f;
-    --secondary: #2d2926;
-    --accent: #d69e2e;
-    --accent-light: #3d3328;
-    --border: #404040;
-    --text-muted: #a0a0a0;
-    --card-background: #262626;
-  }
+/* Dark mode disabled - maintaining consistent warm theme across all devices and system preferences */
+
+/* Force light mode regardless of system preference */
+* {
+  color-scheme: light;
 }
 
-/* Global styles */
+html {
+  color-scheme: light;
+}
+
 body {
+  color-scheme: light;
+}
+
+/* Global styles - Fix scrolling issues */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+body {
+  height: auto;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   line-height: 1.6;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+/* Ensure main layout container can scroll */
+.min-h-screen {
+  min-height: 100vh;
+  height: auto;
+}
+
+/* Reset any problematic flexbox constraints */
+.flex-1 {
+  flex: 1 1 0%;
+  min-height: 0;
 }
 
 /* Smooth scrolling */
@@ -183,6 +224,68 @@ input:focus, textarea:focus, select:focus {
 
 .slide-in {
   animation: slideIn 0.3s ease-out;
+}
+
+/* Text utilities */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+/* Enhanced transitions for product cards */
+.product-card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.product-card-hover:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+}
+
+/* Image loading animation */
+@keyframes imageLoad {
+  from {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.image-load {
+  animation: imageLoad 0.6s ease-out;
+}
+
+/* Pulse animation for placeholders */
+@keyframes softPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.soft-pulse {
+  animation: softPulse 2s ease-in-out infinite;
 }
 
 /* Loading spinner */

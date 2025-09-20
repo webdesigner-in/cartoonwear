@@ -20,27 +20,27 @@ export default function AboutSection() {
   ]
 
   return (
-    <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-white to-cream-50">
+    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-cream-50 to-white">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            Why Choose Our Crochet Items?
+        <div className="text-center mb-16">
+          <h2 className="text-4xl sm:text-5xl font-black text-gray-900 mb-6">
+            ✨ Why Choose Our Crochet Items?
           </h2>
-          <p className="text-lg text-gray-700 max-w-2xl mx-auto">
+          <p className="text-xl sm:text-2xl text-gray-700 max-w-3xl mx-auto font-semibold leading-relaxed">
             Experience the warmth and comfort of handmade crochet items that bring joy to your everyday life.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-3 gap-12">
           {features.map((feature, index) => (
-            <div key={index} className="text-center group">
-              <div className="bg-accent/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-accent/20 transition-colors">
-                <feature.icon className="h-8 w-8 text-accent" />
+            <div key={index} className="text-center group hover:transform hover:-translate-y-2 transition-all duration-300">
+              <div className="bg-warm-100 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-warm-50 group-hover:border-2 group-hover:border-golden transition-all duration-300 shadow-lg group-hover:shadow-xl">
+                <feature.icon className="h-10 w-10 text-golden" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-2xl font-black text-gray-900 mb-4">
                 {feature.title}
               </h3>
-              <p className="text-gray-700">
+              <p className="text-lg text-gray-700 font-medium leading-relaxed">
                 {feature.description}
               </p>
             </div>

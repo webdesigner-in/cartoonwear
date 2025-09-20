@@ -7,8 +7,8 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url)
-    const category = searchParams.get('category')
-    const search = searchParams.get('search')
+  const category = searchParams.get('category')
+  const search = searchParams.get('search') || searchParams.get('q') || ''
     const page = parseInt(searchParams.get('page')) || 1
     const limit = parseInt(searchParams.get('limit')) || 12
 
@@ -45,15 +45,27 @@ export async function GET(request) {
       prisma.product.count({ where })
     ])
 
-    // Calculate average rating for each product
-    const productsWithRating = products.map(product => ({
-      ...product,
-      images: product.images ? JSON.parse(product.images) : [],
-      averageRating: product.reviews.length > 0
-        ? product.reviews.reduce((acc, review) => acc + review.rating, 0) / product.reviews.length
-        : 0,
-      reviewCount: product.reviews.length
-    }))
+    // Calculate average rating for each product and normalize images for frontend
+    const productsWithRating = products.map(product => {
+      let imagesArr = [];
+      try {
+        imagesArr = product.images ? JSON.parse(product.images) : [];
+      } catch {
+        imagesArr = [];
+      }
+      // Ensure we have at least one valid image or use placeholder
+      if (!Array.isArray(imagesArr) || imagesArr.length === 0) {
+        imagesArr = ["https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop"];
+      }
+      return {
+        ...product,
+        images: imagesArr,
+        averageRating: product.reviews.length > 0
+          ? product.reviews.reduce((acc, review) => acc + review.rating, 0) / product.reviews.length
+          : 0,
+        reviewCount: product.reviews.length
+      };
+    });
 
     return NextResponse.json({
       products: productsWithRating,
@@ -66,7 +78,7 @@ export async function GET(request) {
     })
 
   } catch (error) {
-    console.error('Products fetch error:', error)
+  // Removed console.error for clean console
     return NextResponse.json(
       { error: 'Failed to fetch products' },
       { status: 500 }
@@ -153,10 +165,62 @@ export async function POST(request) {
     }, { status: 201 })
 
   } catch (error) {
-    console.error('Product creation error:', error)
+  // Removed console.error for clean console
     return NextResponse.json(
       { error: 'Failed to create product' },
       { status: 500 }
     )
+  }
+}
+
+// PUT - Edit product (Admin only)
+export async function PUT(request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const body = await request.json();
+    const { id, ...updateData } = body;
+    if (!id) {
+      return NextResponse.json({ error: 'Product ID required' }, { status: 400 });
+    }
+    if (updateData.images) {
+      updateData.images = JSON.stringify(updateData.images);
+    }
+    if (updateData.price) {
+      updateData.price = parseFloat(updateData.price);
+    }
+    if (updateData.stock) {
+      updateData.stock = parseInt(updateData.stock);
+    }
+    const product = await prisma.product.update({
+      where: { id },
+      data: updateData,
+      include: { category: true }
+    });
+    return NextResponse.json({ product: { ...product, images: JSON.parse(product.images) }, message: 'Product updated successfully' });
+  } catch (error) {
+  // Removed console.error for clean console
+    return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
+  }
+}
+
+// DELETE - Remove product (Admin only)
+export async function DELETE(request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const { id } = await request.json();
+    if (!id) {
+      return NextResponse.json({ error: 'Product ID required' }, { status: 400 });
+    }
+    await prisma.product.delete({ where: { id } });
+    return NextResponse.json({ message: 'Product deleted successfully' });
+  } catch (error) {
+  // Removed console.error for clean console
+    return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
   }
 }

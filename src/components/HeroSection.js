@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import { Heart, Star, ShoppingBag } from 'lucide-react'
+import CrochetImage from '@/components/ui/CrochetImage'
 
 export default function HeroSection() {
   return (
-    <section className="relative min-h-[80vh] flex items-center justify-center bg-gradient-to-br from-white via-cream-50 to-warm-50">
+    <section className="relative min-h-[80vh] flex items-center justify-center bg-gradient-to-br from-cream-50 via-warm-50 to-cream-100">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0 bg-[url('/pattern-crochet.svg')] bg-repeat"></div>
+        <div className="absolute inset-0 bg-[url('/crochet-pattern.svg')] bg-repeat"></div>
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -14,39 +15,39 @@ export default function HeroSection() {
           {/* Left Content */}
           <div className="text-center lg:text-left space-y-8 fade-in">
             {/* Badge */}
-            <div className="inline-flex items-center space-x-2 bg-white backdrop-blur-sm border border-cream-300 rounded-full px-4 py-2 text-sm text-gray-800 font-medium shadow-sm">
-              <Heart className="h-4 w-4 text-accent" />
-              <span>Handmade with Love</span>
+            <div className="inline-flex items-center space-x-2 bg-warm-100 border-2 border-golden rounded-full px-6 py-3 text-sm text-gray-900 font-bold shadow-md">
+              <Heart className="h-5 w-5 text-golden" />
+              <span>✨ Handmade with Love</span>
             </div>
 
             {/* Main Heading */}
-            <div className="space-y-4">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+            <div className="space-y-6">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-gray-900 leading-tight">
                 Beautiful
-                <span className="block text-accent">Crochet Creations</span>
+                <span className="block text-golden">Crochet Creations</span>
                 <span className="block">for Every Home</span>
               </h1>
-              <p className="text-lg sm:text-xl text-gray-800 max-w-2xl leading-relaxed font-medium">
+              <p className="text-xl sm:text-2xl text-gray-700 max-w-2xl leading-relaxed font-semibold">
                 Discover our collection of handmade crochet items, from cozy blankets and stylish accessories to adorable amigurumi. Each piece is crafted with care and attention to detail.
               </p>
             </div>
 
             {/* Stats */}
-            <div className="flex justify-center lg:justify-start space-x-8 py-4">
+            <div className="flex justify-center lg:justify-start space-x-8 py-6">
               <div className="text-center">
-                <div className="text-3xl font-bold text-accent">500+</div>
-                <div className="text-sm text-gray-800 font-semibold">Happy Customers</div>
+                <div className="text-4xl font-black text-golden">500+</div>
+                <div className="text-sm text-gray-900 font-bold">💖 Happy Customers</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-accent">50+</div>
-                <div className="text-sm text-gray-800 font-semibold">Unique Designs</div>
+                <div className="text-4xl font-black text-golden">50+</div>
+                <div className="text-sm text-gray-900 font-bold">🎨 Unique Designs</div>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center space-x-1">
-                  <span className="text-3xl font-bold text-accent">4.9</span>
-                  <Star className="h-5 w-5 text-accent fill-current" />
+                  <span className="text-4xl font-black text-golden">4.9</span>
+                  <Star className="h-6 w-6 text-golden fill-current" />
                 </div>
-                <div className="text-sm text-gray-800 font-semibold">Average Rating</div>
+                <div className="text-sm text-gray-900 font-bold">⭐ Average Rating</div>
               </div>
             </div>
 
@@ -54,28 +55,28 @@ export default function HeroSection() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Link
                 href="/products"
-                className="btn btn-primary text-lg px-8 py-4 hover:shadow-lg transform hover:-translate-y-1 transition-all duration-200"
+                className="bg-golden hover:bg-golden-dark text-white text-lg font-bold px-8 py-4 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-200 flex items-center gap-3 justify-center"
               >
                 <ShoppingBag className="h-5 w-5" />
                 Shop Now
               </Link>
               <Link
                 href="/about"
-                className="btn btn-secondary text-lg px-8 py-4 hover:shadow-lg transition-all duration-200"
+                className="bg-white hover:bg-cream-100 text-gray-900 text-lg font-bold px-8 py-4 rounded-xl border-2 border-cream-300 hover:border-golden shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 justify-center"
               >
-                Learn More
+                📚 Learn More
               </Link>
             </div>
 
             {/* Special Offer */}
-            <div className="bg-white/90 border border-accent/30 rounded-2xl p-6 max-w-md mx-auto lg:mx-0 shadow-sm">
-              <div className="flex items-start space-x-3">
-                <div className="bg-accent/10 rounded-full p-2 flex-shrink-0">
-                  <Heart className="h-5 w-5 text-accent" />
+            <div className="bg-gradient-to-r from-warm-50 to-warm-100 border-2 border-golden rounded-2xl p-6 max-w-md mx-auto lg:mx-0 shadow-lg">
+              <div className="flex items-start space-x-4">
+                <div className="bg-golden rounded-full p-3 flex-shrink-0">
+                  <Heart className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Free Shipping</h3>
-                  <p className="text-sm text-gray-800">
+                  <h3 className="font-black text-gray-900 mb-2 text-lg">🚚 Free Shipping</h3>
+                  <p className="text-base text-gray-800 font-semibold">
                     On orders above ₹1,000. Limited time offer!
                   </p>
                 </div>
@@ -88,43 +89,41 @@ export default function HeroSection() {
             <div className="grid grid-cols-2 gap-4 h-full">
               {/* Large Image */}
               <div className="col-span-2 relative">
-                <div className="card overflow-hidden h-80 bg-gradient-to-br from-cream-100 to-cream-200">
-                  <div className="h-full flex items-center justify-center">
-                    <div className="text-center text-gray-500">
-                      <div className="text-6xl mb-4">🧶</div>
-                      <p className="text-sm">Featured Crochet Item</p>
-                    </div>
-                  </div>
-                </div>
-                {/* Floating badge */}
-                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm border border-cream-300 rounded-full px-3 py-1 text-xs font-medium text-accent">
-                  New Arrival
-                </div>
+                <CrochetImage
+                  src="/crochet-images/hero-main.jpg"
+                  alt="Beautiful handmade crochet blanket with intricate patterns"
+                  width={800}
+                  height={320}
+                  className="card overflow-hidden h-80"
+                  placeholderType="featured"
+                  badge="✨ New Arrival"
+                  priority={true}
+                />
               </div>
 
               {/* Small Images */}
-              <div className="card overflow-hidden h-36 bg-gradient-to-br from-warm-50 to-warm-100">
-                <div className="h-full flex items-center justify-center">
-                  <div className="text-center text-gray-500">
-                    <div className="text-3xl mb-2">🏠</div>
-                    <p className="text-xs">Home Decor</p>
-                  </div>
-                </div>
-              </div>
+              <CrochetImage
+                src="/crochet-images/home-decor.jpg"
+                alt="Cozy crochet pillows and home decorative items"
+                width={400}
+                height={144}
+                className="card overflow-hidden h-36 border-2 border-golden"
+                placeholderType="home"
+              />
               
-              <div className="card overflow-hidden h-36 bg-gradient-to-br from-accent-light to-cream-100">
-                <div className="h-full flex items-center justify-center">
-                  <div className="text-center text-gray-500">
-                    <div className="text-3xl mb-2">👶</div>
-                    <p className="text-xs">Baby Items</p>
-                  </div>
-                </div>
-              </div>
+              <CrochetImage
+                src="/crochet-images/baby-items.jpg"
+                alt="Adorable crochet baby blankets and toys"
+                width={400}
+                height={144}
+                className="card overflow-hidden h-36 border-2 border-golden"
+                placeholderType="baby"
+              />
             </div>
 
             {/* Floating elements */}
-            <div className="absolute -bottom-4 -right-4 bg-accent/10 backdrop-blur-sm rounded-full p-3 border border-accent/20">
-              <Star className="h-5 w-5 text-accent" />
+            <div className="absolute -bottom-4 -right-4 bg-golden rounded-full p-4 border-4 border-white shadow-xl">
+              <Star className="h-6 w-6 text-white fill-current" />
             </div>
           </div>
         </div>

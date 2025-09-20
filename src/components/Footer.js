@@ -11,20 +11,20 @@ export default function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <div className="flex items-center space-x-2 mb-4">
-              <Heart className="h-6 w-6 text-accent" />
-              <span className="text-xl font-bold">The Kroshet Nani</span>
+              <Heart className="h-6 w-6 text-golden" />
+              <span className="text-xl font-bold">🧶 The Kroshet Nani</span>
             </div>
             <p className="text-gray-400 text-sm mb-4">
               Creating beautiful handmade crochet items with love and care. Each piece tells a story of craftsmanship and creativity.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-accent transition-colors">
+              <a href="#" className="text-gray-400 hover:text-golden transition-colors">
                 <Facebook className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-accent transition-colors">
+              <a href="#" className="text-gray-400 hover:text-golden transition-colors">
                 <Instagram className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-accent transition-colors">
+              <a href="#" className="text-gray-400 hover:text-golden transition-colors">
                 <Twitter className="h-5 w-5" />
               </a>
             </div>
@@ -99,16 +99,16 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4">Contact Info</h3>
             <div className="space-y-3 text-sm">
               <div className="flex items-center space-x-2">
-                <Mail className="h-4 w-4 text-accent flex-shrink-0" />
-                <span className="text-gray-400">hello@thekroshetnani.com</span>
+                <Mail className="h-4 w-4 text-golden flex-shrink-0" />
+                <span className="text-gray-300">hello@thekroshetnani.com</span>
               </div>
               <div className="flex items-center space-x-2">
-                <Phone className="h-4 w-4 text-accent flex-shrink-0" />
-                <span className="text-gray-400">+91 XXXXX XXXXX</span>
+                <Phone className="h-4 w-4 text-golden flex-shrink-0" />
+                <span className="text-gray-300">+91 XXXXX XXXXX</span>
               </div>
               <div className="flex items-start space-x-2">
-                <MapPin className="h-4 w-4 text-accent flex-shrink-0 mt-0.5" />
-                <span className="text-gray-400">
+                <MapPin className="h-4 w-4 text-golden flex-shrink-0 mt-0.5" />
+                <span className="text-gray-300">
                   Delhi, India
                 </span>
               </div>
