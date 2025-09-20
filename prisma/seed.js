@@ -182,19 +182,20 @@ async function main() {
   const bcrypt = require('bcryptjs');
   const hashedPassword = await bcrypt.hash('admin123', 12);
 
-  const adminUser = await prisma.user.upsert({
+  const superAdminUser = await prisma.user.upsert({
     where: { email: 'admin@thekroshetnani.com' },
     update: {},
     create: {
-      name: 'Admin User',
+      name: 'Super Admin',
       email: 'admin@thekroshetnani.com',
       password: hashedPassword,
-      role: 'ADMIN',
+      role: 'SUPER_ADMIN',
       isActive: true,
     },
   });
 
-  console.log(`✅ Created admin user: ${adminUser.email}`);
+  console.log(`✅ Created super admin user: ${superAdminUser.email}`);
+  console.log(`🔑 Super admin credentials: admin@thekroshetnani.com / admin123`);
 
   console.log('🎉 Database seeding completed successfully!');
 }

@@ -12,6 +12,7 @@ import {
   Home
 } from 'lucide-react'
 import { formatAmount } from '@/lib/cashfree'
+import AnimatedDeliveryTruck from '@/components/icons/AnimatedDeliveryTruck'
 
 function PaymentSuccessContent() {
   const router = useRouter()
@@ -35,7 +36,8 @@ function PaymentSuccessContent() {
 
   const checkPaymentStatus = async () => {
     try {
-      console.log('Checking payment status for order:', orderId)
+      console.log('🔍 Checking payment status for order:', orderId)
+      console.log('📊 URL search params:', Array.from(searchParams.entries()))
       
       // Check if this is development mode
       const isDevMode = searchParams.get('dev_mode') === 'true'
@@ -57,7 +59,15 @@ function PaymentSuccessContent() {
       const response = await fetch(`/api/payment/status?orderId=${orderId}`)
       const data = await response.json()
       
-      console.log('Payment status response:', data)
+      console.log('📊 Payment status API response:', {
+        status: response.status,
+        success: data.success,
+        orderFound: !!data.order,
+        orderId: data.order?.id,
+        paymentId: data.order?.paymentId,
+        paymentStatus: data.order?.paymentStatus,
+        orderStatus: data.order?.status
+      })
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to check payment status')
@@ -137,6 +147,15 @@ function PaymentSuccessContent() {
           <div className="flex justify-center mb-6">
             {orderStatus === 'checking' ? (
               <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-golden"></div>
+            ) : orderStatus === 'success' ? (
+              <div className="flex flex-col items-center">
+                <AnimatedDeliveryTruck 
+                  className="w-20 h-16 mb-4" 
+                  color="#d97706" 
+                  isAnimating={true}
+                />
+                <CheckCircle className="h-12 w-12 text-green-500" />
+              </div>
             ) : (
               getStatusIcon()
             )}
@@ -188,13 +207,13 @@ function PaymentSuccessContent() {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            {orderStatus === 'success' && (
+            {orderStatus === 'success' && orderData && (
               <Link
-                href="/profile"
+                href={`/orders/${orderData.id}`}
                 className="bg-golden hover:bg-golden-dark text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
               >
                 <Package className="h-5 w-5" />
-                View Orders
+                View My Order
               </Link>
             )}
             

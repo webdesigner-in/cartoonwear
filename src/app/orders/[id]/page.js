@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Package, MapPin, CreditCard, Calendar, Truck, Phone } from 'lucide-react'
+import { ArrowLeft, Package, MapPin, CreditCard, Calendar, Truck, Phone, RefreshCw } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 export default function OrderDetailPage() {
@@ -13,6 +13,41 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [refreshing, setRefreshing] = useState(false)
+
+  async function fetchOrderData(showRefreshing = false) {
+    try {
+      if (showRefreshing) setRefreshing(true)
+      
+      const res = await fetch(`/api/order/${params.id}`, {
+        cache: 'no-store' // Force fresh data
+      })
+      if (!res.ok) throw new Error('Order not found')
+      const data = await res.json()
+      setOrder(data.order)
+      
+      // If payment is still pending, check for updates
+      if (data.order.paymentStatus === 'PENDING' && data.order.paymentId) {
+        console.log('Payment still pending, checking for updates...')
+        try {
+          const statusRes = await fetch(`/api/payment/status?orderId=${data.order.paymentId}`)
+          if (statusRes.ok) {
+            const statusData = await statusRes.json()
+            if (statusData.success && statusData.order.paymentStatus !== data.order.paymentStatus) {
+              setOrder(statusData.order)
+            }
+          }
+        } catch (statusError) {
+          console.log('Status check failed:', statusError)
+        }
+      }
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+      if (showRefreshing) setRefreshing(false)
+    }
+  }
 
   useEffect(() => {
     // Wait for auth to load before making any decisions
@@ -23,23 +58,25 @@ export default function OrderDetailPage() {
       return
     }
 
-    async function fetchOrder() {
-      try {
-        const res = await fetch(`/api/order/${params.id}`)
-        if (!res.ok) throw new Error('Order not found')
-        const data = await res.json()
-        setOrder(data.order)
-      } catch (err) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     if (params.id) {
-      fetchOrder()
+      fetchOrderData()
     }
   }, [params.id, authLoading, isAuthenticated, router])
+  
+  // Auto-refresh every 30 seconds if payment is pending
+  useEffect(() => {
+    if (order && order.paymentStatus === 'PENDING') {
+      const interval = setInterval(() => {
+        fetchOrderData()
+      }, 30000) // 30 seconds
+      
+      return () => clearInterval(interval)
+    }
+  }, [order])
+  
+  const handleRefresh = () => {
+    fetchOrderData(true)
+  }
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -119,7 +156,18 @@ export default function OrderDetailPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Order Status */}
             <div className="card p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Order Status</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">Order Status</h2>
+                <button
+                  onClick={handleRefresh}
+                  disabled={refreshing}
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-golden hover:text-golden-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Refresh order status"
+                >
+                  <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  {refreshing ? 'Updating...' : 'Refresh'}
+                </button>
+              </div>
               <div className="flex items-center gap-4 mb-4">
                 <div className="flex items-center gap-2">
                   <Package className="h-5 w-5 text-golden" />

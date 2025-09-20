@@ -21,6 +21,8 @@ export async function GET(request) {
         image: true,
         role: true,
         isActive: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
     if (!user) {
@@ -38,6 +40,8 @@ export async function GET(request) {
       image: true,
       role: true,
       isActive: true,
+      createdAt: true,
+      updatedAt: true,
     },
   });
   return NextResponse.json({ users, total: users.length });
@@ -63,6 +67,8 @@ export async function PUT(request) {
       image: true,
       role: true,
       isActive: true,
+      createdAt: true,
+      updatedAt: true,
     },
   });
   return NextResponse.json({ user });

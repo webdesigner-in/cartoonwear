@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '../../../auth/[...nextauth]/route'
 import { prisma } from '@/lib/prisma'
+import { sendPaymentStatusUpdateEmail, sendOrderStatusUpdateEmail } from '@/lib/email/orderNotifications'
 
 // PATCH - Update specific order status
 export async function PATCH(request, { params }) {
@@ -17,6 +18,30 @@ export async function PATCH(request, { params }) {
 
     if (!id) {
       return NextResponse.json({ error: 'Order ID required' }, { status: 400 })
+    }
+
+    // Get the current order to compare status changes
+    const currentOrder = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+        items: {
+          include: {
+            product: true
+          }
+        },
+        address: true
+      }
+    })
+
+    if (!currentOrder) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
 
     // Build update data object
@@ -45,6 +70,24 @@ export async function PATCH(request, { params }) {
         address: true
       }
     })
+
+    // Send email notifications for status changes
+    try {
+      // Send payment status update email if payment status changed
+      if (paymentStatus !== undefined && paymentStatus !== currentOrder.paymentStatus) {
+        console.log(`Payment status changed: ${currentOrder.paymentStatus} → ${paymentStatus}`)
+        await sendPaymentStatusUpdateEmail(order, currentOrder.paymentStatus, paymentStatus)
+      }
+
+      // Send order status update email if order status changed
+      if (status !== undefined && status !== currentOrder.status) {
+        console.log(`Order status changed: ${currentOrder.status} → ${status}`)
+        await sendOrderStatusUpdateEmail(order, currentOrder.status, status)
+      }
+    } catch (emailError) {
+      // Log email errors but don't fail the request
+      console.error('Email notification error:', emailError)
+    }
 
     return NextResponse.json({ order })
 

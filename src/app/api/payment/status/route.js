@@ -11,9 +11,9 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Order ID is required' }, { status: 400 })
     }
 
-    console.log('Checking payment status for Cashfree order:', orderId)
+    console.log('🔍 Checking payment status for order:', orderId)
 
-    // First, try to find the order in our database by Cashfree order ID
+    // Try to find order by paymentId (Cashfree order ID) first
     let order = await prisma.order.findFirst({
       where: { paymentId: orderId },
       include: {
@@ -33,8 +33,10 @@ export async function GET(request) {
       }
     })
 
-    // If not found by paymentId, try by our internal order ID
+    // If not found by paymentId, check if it's our internal order ID
+    // This is for backward compatibility with the success page
     if (!order) {
+      console.log('🔄 Not found by paymentId, trying internal order ID...')
       order = await prisma.order.findUnique({
         where: { id: orderId },
         include: {
@@ -56,20 +58,24 @@ export async function GET(request) {
     }
 
     if (!order) {
-      console.error('Order not found:', orderId)
+      console.error('❌ Order not found:', orderId)
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
 
-    console.log('Order found in database:', {
+    console.log('✅ Order found in database:', {
       id: order.id,
       paymentId: order.paymentId,
       paymentStatus: order.paymentStatus,
-      status: order.status
+      status: order.status,
+      userEmail: order.user?.email,
+      totalAmount: order.totalAmount,
+      createdAt: order.createdAt
     })
 
     // If payment is still pending, check with Cashfree
     if (order.paymentStatus === 'PENDING' && order.paymentId) {
-      console.log('Payment still pending, checking with Cashfree...')
+      console.log('🔄 Payment still pending, checking with Cashfree API...')
+      console.log('📋 Query details - orderId from request:', orderId, 'paymentId in DB:', order.paymentId)
       
       const cashfreeStatus = await getOrderStatus(order.paymentId)
       
@@ -99,7 +105,14 @@ export async function GET(request) {
 
         // Update order in database if status changed
         if (newPaymentStatus !== order.paymentStatus || newOrderStatus !== order.status) {
-          console.log('Updating order status:', { newPaymentStatus, newOrderStatus })
+          console.log('🔄 Status change detected - updating order:', {
+            orderId: order.id,
+            paymentId: order.paymentId,
+            oldPaymentStatus: order.paymentStatus,
+            newPaymentStatus,
+            oldOrderStatus: order.status,
+            newOrderStatus
+          })
           
           order = await prisma.order.update({
             where: { id: order.id },

@@ -353,17 +353,42 @@ export default function CheckoutPage() {
                 {cart.map(item => (
                   <div key={item.id} className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden">
-                      {item.product.images && item.product.images.length > 0 ? (
-                        <img
-                          src={typeof item.product.images[0] === 'string' ? item.product.images[0] : item.product.images[0].url}
-                          alt={item.product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-700">
-                          🧶
-                        </div>
-                      )}
+                      {(() => {
+                        try {
+                          let imageUrl = null;
+                          if (item.product.images) {
+                            if (typeof item.product.images === 'string') {
+                              const parsedImages = JSON.parse(item.product.images);
+                              imageUrl = Array.isArray(parsedImages) && parsedImages.length > 0 ? parsedImages[0] : null;
+                            } else if (Array.isArray(item.product.images) && item.product.images.length > 0) {
+                              imageUrl = item.product.images[0];
+                            }
+                          }
+                          
+                          return imageUrl ? (
+                            <img
+                              src={imageUrl}
+                              alt={item.product.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.src = 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=64&h=64&fit=crop';
+                                e.target.onerror = null;
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              🧶
+                            </div>
+                          );
+                        } catch (error) {
+                          return (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              🧶
+                            </div>
+                          );
+                        }
+                      })()
+                      }
                     </div>
                     <div className="flex-1">
                       <h3 className="font-medium text-gray-700">{item.product.name}</h3>

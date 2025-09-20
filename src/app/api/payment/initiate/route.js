@@ -44,35 +44,90 @@ export async function POST(request) {
     // Generate unique order ID
     const cashfreeOrderId = generateOrderId()
 
-    // Create order in database first
-    const order = await prisma.order.create({
-      data: {
-        userId: session.user.id,
-        addressId: addressId,
-        status: 'PENDING',
-        paymentStatus: 'PENDING',
-        paymentMethod: 'cashfree',
-        totalAmount: totalAmount,
-        shippingAmount: shippingAmount,
-        taxAmount: taxAmount,
-        paymentId: cashfreeOrderId,
-        items: {
-          create: cartItems.map(item => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            price: item.price
-          }))
+    // Check stock availability for all items before creating order
+    const stockValidation = await Promise.all(
+      cartItems.map(async (item) => {
+        const product = await prisma.product.findUnique({
+          where: { id: item.productId },
+          select: { id: true, name: true, stock: true, isActive: true }
+        })
+        
+        if (!product) {
+          return { valid: false, message: `Product not found` }
         }
-      },
-      include: {
-        items: {
-          include: {
-            product: true
+        
+        if (!product.isActive) {
+          return { valid: false, message: `${product.name} is no longer available` }
+        }
+        
+        if (product.stock < item.quantity) {
+          return { 
+            valid: false, 
+            message: `Insufficient stock for ${product.name}. Only ${product.stock} available, but ${item.quantity} requested.`
+          }
+        }
+        
+        return { valid: true, product }
+      })
+    )
+    
+    // Check if any validation failed
+    const invalidItems = stockValidation.filter(result => !result.valid)
+    if (invalidItems.length > 0) {
+      return NextResponse.json({ 
+        error: 'Stock validation failed', 
+        details: invalidItems.map(item => item.message)
+      }, { status: 400 })
+    }
+
+    // Create order in database with stock reduction using transaction
+    const order = await prisma.$transaction(async (tx) => {
+      // Create the order
+      const newOrder = await tx.order.create({
+        data: {
+          userId: session.user.id,
+          addressId: addressId,
+          status: 'PENDING',
+          paymentStatus: 'PENDING',
+          paymentMethod: 'cashfree',
+          totalAmount: totalAmount,
+          shippingAmount: shippingAmount,
+          taxAmount: taxAmount,
+          paymentId: cashfreeOrderId,
+          items: {
+            create: cartItems.map(item => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              price: item.price
+            }))
           }
         },
-        address: true,
-        user: true
+        include: {
+          items: {
+            include: {
+              product: true
+            }
+          },
+          address: true,
+          user: true
+        }
+      })
+
+      // Reduce stock for each item (reserve stock for online payment)
+      for (const item of cartItems) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: {
+            stock: {
+              decrement: item.quantity
+            }
+          }
+        })
+        
+        console.log(`✅ Reserved stock for product ${item.productId} by ${item.quantity}`);
       }
+      
+      return newOrder
     })
 
     console.log('Order created in database:', order.id)

@@ -17,35 +17,44 @@ export const authOptions = {
         password: { label: 'Password', type: 'password' }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null
-        }
-
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            throw new Error('Please provide both email and password');
           }
-        })
 
-        if (!user || !user.password) {
-          return null
-        }
+          const user = await prisma.user.findUnique({
+            where: {
+              email: credentials.email
+            }
+          })
 
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
+          if (!user) {
+            throw new Error('No account found with this email address');
+          }
+          
+          if (!user.password) {
+            throw new Error('This account was created with social login. Please use Google or GitHub to sign in');
+          }
 
-        if (!isPasswordValid) {
-          return null
-        }
+          const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
 
-        if (!user.isActive) {
-          return null
-        }
+          if (!isPasswordValid) {
+            throw new Error('Incorrect password. Please try again');
+          }
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
+          if (!user.isActive) {
+            throw new Error('Your account has been deactivated. Please contact support');
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          }
+        } catch (error) {
+          console.error('Login error:', error.message);
+          throw new Error(error.message);
         }
       }
     }),

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Star, Heart, ShoppingCart } from 'lucide-react';
+import { Star } from 'lucide-react';
 import CrochetImage from '@/components/ui/CrochetImage';
 
 export default function ProductCard({ product, variant = 'default' }) {
@@ -75,19 +75,6 @@ export default function ProductCard({ product, variant = 'default' }) {
             placeholderType={getPlaceholderType()}
             badge={getBadge()}
           />
-          
-          {/* Action buttons overlay */}
-          <div className="absolute bottom-3 right-3 flex space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-            <button className="bg-white/95 backdrop-blur-sm p-2.5 rounded-full hover:bg-white transition-all duration-200 shadow-lg hover:shadow-xl group/btn">
-              <Heart className="h-4 w-4 text-gray-600 group-hover/btn:text-red-500 transition-colors" />
-            </button>
-            <Link
-              href={`/products/${product.id}`}
-              className="bg-golden text-white p-2.5 rounded-full hover:bg-golden-dark transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-110"
-            >
-              <ShoppingCart className="h-4 w-4" />
-            </Link>
-          </div>
 
           {/* Stock indicator */}
           {product.stock <= 5 && product.stock > 0 && (

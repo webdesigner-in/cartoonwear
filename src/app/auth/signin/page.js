@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-hot-toast';
+import { toastError, toastSuccess } from '@/utils/toast';
 import Link from 'next/link';
 import { Loader2, Lock, Mail, Eye, EyeOff, Sparkles, Heart, ShoppingBag } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,6 +17,17 @@ export default function SignInPage() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  // Clear error when user starts typing
+  const handleEmailChange = (e) => {
+    setEmail(e.target.value);
+    if (error) setError('');
+  };
+
+  const handlePasswordChange = (e) => {
+    setPassword(e.target.value);
+    if (error) setError('');
+  };
+
   useEffect(() => {
     if (status === 'authenticated') {
       router.replace('/');
@@ -27,6 +38,28 @@ export default function SignInPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    
+    // Basic client-side validation
+    if (!email.trim()) {
+      toastError('Please enter your email address');
+      setError('Please enter your email address');
+      setLoading(false);
+      return;
+    }
+    
+    if (!password.trim()) {
+      toastError('Please enter your password');
+      setError('Please enter your password');
+      setLoading(false);
+      return;
+    }
+    
+    if (!email.includes('@')) {
+      toastError('Please enter a valid email address');
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
 
     const res = await signIn('credentials', {
       redirect: false,
@@ -37,10 +70,36 @@ export default function SignInPage() {
     setLoading(false);
 
     if (res?.error) {
-      setError(res.error);
-      toast.error(res.error === 'Unauthorized' ? 'Invalid credentials' : res.error);
+      console.log('NextAuth error:', res.error); // For debugging
+      
+      // Map NextAuth errors to user-friendly messages
+      const getErrorMessage = (error) => {
+        switch (error) {
+          case 'CredentialsSignin':
+            return 'Invalid email or password. Please check your credentials and try again.';
+          case 'Configuration':
+            return 'Authentication service is temporarily unavailable. Please try again later.';
+          case 'AccessDenied':
+            return 'Your account has been deactivated. Please contact support.';
+          case 'Verification':
+            return 'Please verify your email address before signing in.';
+          case 'Default':
+            return 'An error occurred during sign in. Please try again.';
+          default:
+            // If the error message comes from our custom authorize function, use it directly
+            if (error.includes('email') || error.includes('password') || error.includes('account') || error.includes('social login') || error.includes('deactivated')) {
+              return error;
+            }
+            // For generic errors, provide a helpful fallback
+            return 'Invalid email or password. Please check your credentials and try again.';
+        }
+      };
+      
+      const errorMessage = getErrorMessage(res.error);
+      setError(errorMessage);
+      toastError(errorMessage);
     } else {
-      toast.success('Logged in successfully!');
+      toastSuccess('Welcome back! You have been signed in successfully.');
       await refreshSession(); // Refresh the session to update the auth state
       router.push('/');
     }
@@ -93,7 +152,7 @@ export default function SignInPage() {
                   type="email"
                   placeholder="Enter your email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={handleEmailChange}
                   className="w-full pl-12 pr-4 py-4 bg-gray-50/50 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-golden focus:bg-white transition-all duration-300 placeholder-gray-400 font-medium"
                   required
                 />
@@ -109,7 +168,7 @@ export default function SignInPage() {
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={handlePasswordChange}
                   className="w-full pl-12 pr-12 py-4 bg-gray-50/50 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-golden focus:bg-white transition-all duration-300 placeholder-gray-400 font-medium"
                   required
                 />
@@ -125,12 +184,29 @@ export default function SignInPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-xl">
-                <div className="flex">
+              <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-xl animate-shake">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
                   <div className="ml-3">
-                    <p className="text-sm text-red-700 font-medium">
-                      {error === 'Unauthorized' ? 'Invalid email or password. Please try again.' : error}
+                    <p className="text-sm text-red-700 font-medium mb-1">
+                      {error}
                     </p>
+                    {error.includes('Invalid email or password') && (
+                      <div className="text-xs text-red-600 mt-1">
+                        <p>• Make sure your email address is correct</p>
+                        <p>• Check that your password is entered correctly</p>
+                        <p>• Try using the "Forgot your password?" link below</p>
+                      </div>
+                    )}
+                    {error.includes('social login') && (
+                      <p className="text-xs text-red-600 mt-1">
+                        Try using the "Continue with Google" button instead.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -168,7 +244,14 @@ export default function SignInPage() {
             {/* Google Sign In */}
             <button
               type="button"
-              onClick={() => signIn('google', { callbackUrl: '/' })}
+              onClick={async () => {
+                try {
+                  await signIn('google', { callbackUrl: '/' });
+                } catch (error) {
+                  console.error('Google signin error:', error);
+                  toastError('Failed to sign in with Google. Please try again.');
+                }
+              }}
               className="w-full bg-white hover:bg-gray-50 text-gray-700 font-semibold py-4 px-6 rounded-2xl border-2 border-gray-200 hover:border-gray-300 transition-all duration-300 flex items-center justify-center gap-3 shadow-sm hover:shadow-md"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -221,8 +304,16 @@ export default function SignInPage() {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-10px); }
         }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+          20%, 40%, 60%, 80% { transform: translateX(4px); }
+        }
         .animate-float {
           animation: float 3s ease-in-out infinite;
+        }
+        .animate-shake {
+          animation: shake 0.6s ease-in-out;
         }
       `}</style>
     </div>

@@ -1,16 +1,13 @@
-// This is your Prisma schema file.
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-// NextAuth.js required models
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -38,23 +35,22 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String     @id @default(cuid())
   name          String?
-  email         String    @unique
+  email         String     @unique
   emailVerified DateTime?
   image         String?
   password      String?
-  role          UserRole  @default(CUSTOMER)
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
+  role          UserRole   @default(SUPER_ADMIN)
+  isActive      Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
   accounts      Account[]
-  sessions      Session[]
+  addresses     Address[]
+  cart          CartItem[]
   orders        Order[]
   reviews       Review[]
-  cart          CartItem[]
-  addresses     Address[]
+  sessions      Session[]
 }
 
 model VerificationToken {
@@ -65,7 +61,6 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Password Reset Token Model
 model PasswordResetToken {
   id        String   @id @default(cuid())
   email     String
@@ -78,7 +73,6 @@ model PasswordResetToken {
   @@index([token])
 }
 
-// Ecommerce Models
 model Category {
   id          String    @id @default(cuid())
   name        String    @unique
@@ -86,125 +80,114 @@ model Category {
   image       String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  
   products    Product[]
 }
 
 model Product {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   name        String
   description String
   price       Float
-  images      String // JSON string of image URLs
+  images      String
   categoryId  String
-  stock       Int      @default(0)
-  isActive    Boolean  @default(true)
-  sku         String   @unique
-  
-  // Crochet specific fields
-  material    String?  // Cotton, Wool, etc.
-  size        String?  // Small, Medium, Large or dimensions
-  color       String?  // Main color
-  pattern     String?  // Pattern name or type
-  difficulty  String?  // Beginner, Intermediate, Advanced
-  washCare    String?  // Washing instructions
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  category    Category   @relation(fields: [categoryId], references: [id])
-  orderItems  OrderItem[]
-  reviews     Review[]
+  stock       Int         @default(0)
+  isActive    Boolean     @default(true)
+  sku         String      @unique
+  material    String?
+  size        String?
+  color       String?
+  pattern     String?
+  difficulty  String?
+  washCare    String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   cartItems   CartItem[]
+  orderItems  OrderItem[]
+  category    Category    @relation(fields: [categoryId], references: [id])
+  reviews     Review[]
 }
 
 model CartItem {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   userId    String
   productId String
-  quantity  Int     @default(1)
+  quantity  Int      @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, productId])
 }
 
 model Address {
-  id         String  @id @default(cuid())
-  userId     String
-  firstName  String
-  lastName   String
-  phone      String
-  address1   String
-  address2   String?
-  city       String
-  state      String
-  zipCode    String
-  country    String  @default("India")
-  isDefault  Boolean @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  
-  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  orders     Order[]
+  id        String   @id @default(cuid())
+  userId    String
+  firstName String
+  lastName  String
+  phone     String
+  address1  String
+  address2  String?
+  city      String
+  state     String
+  zipCode   String
+  country   String   @default("India")
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders    Order[]
 }
 
 model Order {
-  id              String      @id @default(cuid())
-  userId          String
-  addressId       String
-  status          OrderStatus @default(PENDING)
-  paymentStatus   PaymentStatus @default(PENDING)
-  paymentMethod   String?     // cashfree, cod, etc.
-  paymentId       String?     // Cashfree payment ID
-  totalAmount     Float
-  shippingAmount  Float       @default(0)
-  taxAmount       Float       @default(0)
-  discountAmount  Float       @default(0)
-  trackingNumber  String?
-  notes           String?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  
-  user            User        @relation(fields: [userId], references: [id])
-  address         Address     @relation(fields: [addressId], references: [id])
-  items           OrderItem[]
+  id             String        @id @default(cuid())
+  userId         String
+  addressId      String
+  status         OrderStatus   @default(PENDING)
+  paymentStatus  PaymentStatus @default(PENDING)
+  paymentMethod  String?
+  paymentId      String?
+  totalAmount    Float
+  shippingAmount Float         @default(0)
+  taxAmount      Float         @default(0)
+  discountAmount Float         @default(0)
+  trackingNumber String?
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  address        Address       @relation(fields: [addressId], references: [id])
+  user           User          @relation(fields: [userId], references: [id])
+  items          OrderItem[]
 }
 
 model OrderItem {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   orderId   String
   productId String
   quantity  Int
-  price     Float   // Price at time of order
+  price     Float
   createdAt DateTime @default(now())
-  
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id])
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
 }
 
 model Review {
-  id        String   @id @default(cuid())
-  userId    String
-  productId String
-  rating    Int      // 1-5 stars
-  title     String?
-  comment   String?
-  images    String? // JSON string of review image URLs
-  isVerified Boolean @default(false) // Verified purchase
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
+  id         String   @id @default(cuid())
+  userId     String
+  productId  String
+  rating     Int
+  title      String?
+  comment    String?
+  images     String?
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, productId])
 }
 
-// Enums
 enum UserRole {
   SUPER_ADMIN
   ADMIN

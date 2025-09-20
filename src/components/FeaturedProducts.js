@@ -8,13 +8,13 @@ import ProductCard from '@/components/ui/ProductCard'
 export default function FeaturedProducts() {
   // Use Zustand store for products
   const { products, fetchProducts } = useProductStore();
-  const displayProducts = products.slice(0, 6); // Show first 6 as featured
+  const displayProducts = (products && Array.isArray(products)) ? products.slice(0, 6) : []; // Show first 6 as featured
 
   useEffect(() => {
-    if (products.length === 0) {
+    if (!products || products.length === 0) {
       fetchProducts();
     }
-  }, [products.length, fetchProducts]);
+  }, [products, fetchProducts]);
 
   // Component is now imported from ui/ProductCard
 

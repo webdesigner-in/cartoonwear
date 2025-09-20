@@ -60,7 +60,7 @@ const AdminSidebar = () => {
   return (
     <>
       {/* Mobile Menu Button */}
-      <div className="lg:hidden fixed top-4 left-4 z-20">
+      <div className="lg:hidden fixed top-4 left-4 z-20 h-fit">
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           className="p-2 bg-white border border-cream-300 rounded-lg shadow-md hover:shadow-lg transition-shadow"
@@ -79,7 +79,7 @@ const AdminSidebar = () => {
 
       {/* Sidebar */}
       <div className={`
-        fixed lg:sticky top-0 left-0 h-screen bg-white border-r border-cream-300 shadow-xl z-30 transition-all duration-300 ease-in-out
+        fixed lg:sticky top-0 left-0 h-screen bg-white border-r border-cream-300 shadow-xl z-30 transition-all duration-300 ease-in-out flex flex-col
         ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         ${collapsed ? 'w-16' : 'w-64'}
       `}>

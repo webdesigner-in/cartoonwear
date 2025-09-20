@@ -4,13 +4,13 @@ import { verifyPaymentSignature } from '@/lib/cashfree'
 
 export async function POST(request) {
   try {
-    console.log('Webhook received from Cashfree')
+    console.log('🔔 Cashfree webhook received')
     
     const signature = request.headers.get('x-webhook-signature')
     const rawBody = await request.text()
     
-    console.log('Webhook signature:', signature)
-    console.log('Webhook body:', rawBody)
+    console.log('📝 Webhook signature:', signature ? 'Present' : 'Missing')
+    console.log('📝 Webhook body length:', rawBody.length)
 
     if (!signature) {
       console.log('No signature provided')
@@ -21,58 +21,107 @@ export async function POST(request) {
     let webhookData
     try {
       webhookData = JSON.parse(rawBody)
+      console.log('🔍 Parsed webhook data:', JSON.stringify(webhookData, null, 2))
     } catch (error) {
-      console.error('Invalid JSON in webhook:', error)
+      console.error('❌ Invalid JSON in webhook:', error)
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
     }
 
-    // Verify webhook signature
-    const isValidSignature = verifyPaymentSignature(webhookData, signature)
-    if (!isValidSignature) {
-      console.log('Invalid webhook signature')
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+    // Verify webhook signature (skip in development)
+    const isDevelopment = process.env.NODE_ENV === 'development'
+    if (!isDevelopment && signature) {
+      const isValidSignature = verifyPaymentSignature(webhookData, signature)
+      if (!isValidSignature) {
+        console.log('❌ Invalid webhook signature')
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+      }
     }
 
-    console.log('Webhook data verified:', webhookData)
+    console.log('✅ Webhook data verified')
 
-    const { 
-      data: {
-        order: {
-          order_id: cashfreeOrderId,
-          order_status,
-          order_amount
-        } = {},
-        payment: {
-          payment_status,
-          payment_method,
-          cf_payment_id,
-          payment_amount,
-          payment_time,
-          payment_message
-        } = {}
-      } = {},
-      event_time,
-      type: eventType
-    } = webhookData
+    // Extract data from webhook - handle multiple formats
+    let cashfreeOrderId, payment_status, order_status, payment_method, cf_payment_id
+    
+    // Format 1: Standard Cashfree webhook
+    if (webhookData.data && webhookData.data.order) {
+      const { data: { order, payment = {} } } = webhookData
+      cashfreeOrderId = order.order_id
+      order_status = order.order_status
+      payment_status = payment.payment_status
+      payment_method = payment.payment_method
+      cf_payment_id = payment.cf_payment_id
+    } 
+    // Format 2: Direct order data
+    else if (webhookData.order_id) {
+      cashfreeOrderId = webhookData.order_id
+      payment_status = webhookData.payment_status || webhookData.order_status
+      order_status = webhookData.order_status
+      payment_method = webhookData.payment_method
+      cf_payment_id = webhookData.cf_payment_id
+    }
+    
+    console.log('📊 Extracted webhook data:', {
+      cashfreeOrderId,
+      payment_status,
+      order_status,
+      payment_method
+    })
 
     if (!cashfreeOrderId) {
-      console.error('No order ID in webhook data')
+      console.error('❌ No order ID in webhook data')
       return NextResponse.json({ error: 'No order ID provided' }, { status: 400 })
     }
 
-    console.log(`Processing webhook for order: ${cashfreeOrderId}, status: ${payment_status}`)
+    console.log(`🔄 Processing webhook for Cashfree order: ${cashfreeOrderId}, payment status: ${payment_status}`)
 
-    // Find the order in database
+    // Find the order in database ONLY by paymentId (Cashfree order ID)
+    // This prevents wrong receipts by ensuring exact payment ID match
+    console.log(`🔍 Looking for order with paymentId: ${cashfreeOrderId}`)
+    
     const order = await prisma.order.findFirst({
-      where: { paymentId: cashfreeOrderId }
+      where: {
+        paymentId: cashfreeOrderId
+      },
+      include: {
+        user: {
+          select: { email: true, name: true }
+        }
+      }
     })
 
     if (!order) {
-      console.error(`Order not found for Cashfree order ID: ${cashfreeOrderId}`)
+      console.error(`❌ Order not found for Cashfree payment ID: ${cashfreeOrderId}`)
+      console.log('📋 Available orders with pending payments:')
+      
+      // Log recent orders for debugging
+      const recentOrders = await prisma.order.findMany({
+        where: {
+          paymentStatus: 'PENDING',
+          createdAt: {
+            gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
+          }
+        },
+        select: { id: true, paymentId: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 5
+      })
+      
+      console.log('Recent pending orders:', recentOrders)
       return NextResponse.json({ error: 'Order not found' }, { status: 404 })
     }
 
-    console.log(`Found order in database: ${order.id}`)
+    console.log(`✅ Found order: ${order.id} for user: ${order.user?.email || order.userId}`)
+    console.log(`📋 Current status - order: ${order.status}, payment: ${order.paymentStatus}`)
+
+    // Prevent duplicate updates
+    if (payment_status === 'SUCCESS' && order.paymentStatus === 'PAID') {
+      console.log('⚠️  Order already marked as paid, skipping update')
+      return NextResponse.json({ 
+        message: 'Order already updated',
+        orderId: order.id,
+        paymentStatus: order.paymentStatus
+      })
+    }
 
     // Determine new payment status
     let newPaymentStatus = 'PENDING'
