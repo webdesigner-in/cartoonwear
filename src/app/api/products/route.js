@@ -78,9 +78,12 @@ export async function GET(request) {
     })
 
   } catch (error) {
-  // Removed console.error for clean console
+    console.error('Products API Error:', error.message, error.stack)
     return NextResponse.json(
-      { error: 'Failed to fetch products' },
+      { 
+        error: 'Failed to fetch products',
+        details: process.env.NODE_ENV === 'development' ? error.message : 'Database connection error'
+      },
       { status: 500 }
     )
   }
