@@ -2,6 +2,7 @@ import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
 import { prisma } from '@/lib/prisma'
+import { validateEmail } from '@/lib/emailValidation'
 import bcrypt from 'bcryptjs'
 
 export const authOptions = {
@@ -21,30 +22,81 @@ export const authOptions = {
             throw new Error('Please provide both email and password');
           }
 
+          // Validate password strength for new accounts
+          if (credentials.password.length < 6) {
+            throw new Error('Password must be at least 6 characters long');
+          }
+
           const user = await prisma.user.findUnique({
             where: {
-              email: credentials.email
+              email: credentials.email.toLowerCase()
             }
           })
 
           if (!user) {
-            throw new Error('No account found with this email address');
+            // User doesn't exist - validate email before creating account
+            console.log(`🔍 Validating email for new account: ${credentials.email}`);
+            
+            const emailValidation = await validateEmail(credentials.email.toLowerCase());
+            
+            if (!emailValidation.isValid) {
+              console.log(`❌ Invalid email rejected: ${credentials.email} - ${emailValidation.reason}`);
+              throw new Error(`Invalid email: ${emailValidation.reason}`);
+            }
+            
+            console.log(`✅ Email validation passed: ${credentials.email}`);
+            
+            // Create new account with validated email
+            try {
+              const hashedPassword = await bcrypt.hash(credentials.password, 12);
+              
+              const newUser = await prisma.user.create({
+                data: {
+                  email: credentials.email.toLowerCase(),
+                  name: credentials.email.split('@')[0], // Use email prefix as name
+                  password: hashedPassword,
+                  role: 'CUSTOMER',
+                  isActive: true,
+                  // emailVerified: null (will be null until they verify)
+                }
+              });
+              
+              console.log(`🎉 New account created with validated email: ${credentials.email}`);
+              
+              return {
+                id: newUser.id,
+                email: newUser.email,
+                name: newUser.name,
+                role: newUser.role,
+              };
+            } catch (createError) {
+              console.error('❌ Error creating new account:', createError);
+              if (createError.code === 'P2002') {
+                throw new Error('An account with this email already exists.');
+              }
+              throw new Error('Failed to create account. Please try again.');
+            }
           }
           
+          // User exists - check if it's a social login account
           if (!user.password) {
-            throw new Error('This account was created with social login. Please use Google to sign in');
+            throw new Error('This account was created with social login. Please use Google to sign in or reset your password.');
           }
 
+          // Validate password for existing user
           const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
 
           if (!isPasswordValid) {
-            throw new Error('Incorrect password. Please try again');
+            throw new Error('Incorrect password. Please try again.');
           }
 
+          // Check if user is active
           if (!user.isActive) {
-            throw new Error('Your account has been deactivated. Please contact support');
+            throw new Error('Your account has been deactivated. Please contact support.');
           }
 
+          console.log(`✅ User signed in: ${credentials.email}`);
+          
           return {
             id: user.id,
             email: user.email,
@@ -52,7 +104,7 @@ export const authOptions = {
             role: user.role,
           }
         } catch (error) {
-          console.error('Login error:', error.message);
+          console.error('❌ Credentials login error:', error.message);
           throw new Error(error.message);
         }
       }
