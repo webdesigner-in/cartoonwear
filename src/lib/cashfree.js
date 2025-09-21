@@ -69,10 +69,11 @@ const createPaymentSession = async (orderData) => {
     console.log('Payment session response:', JSON.stringify(response.data, null, 2))
     
     if (response.data) {
-      // Construct payment URL from session ID
-      const paymentUrl = response.data.payment_session_id 
-        ? `https://payments${config.baseUrl.includes('sandbox') ? '-test' : ''}.cashfree.com/pay/${response.data.payment_session_id}`
-        : null
+      // Use the payment_links URL from Cashfree response directly, or construct fallback
+      const paymentUrl = response.data.payment_links?.web 
+        || (response.data.payment_session_id 
+            ? `https://payments${config.baseUrl.includes('sandbox') ? '-test' : ''}.cashfree.com/forms/${response.data.payment_session_id}`
+            : null)
         
       return {
         success: true,
