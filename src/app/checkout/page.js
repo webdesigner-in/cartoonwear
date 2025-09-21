@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
 import { useCart } from '@/components/CartContext'
 import Link from 'next/link'
+import Script from 'next/script'
 import { ArrowLeft, MapPin, CreditCard, Truck, Shield } from 'lucide-react'
 import AnimatedDeliveryTruck from '@/components/icons/AnimatedDeliveryTruck'
 
@@ -21,6 +22,7 @@ export default function CheckoutPage() {
   const [orderAnimating, setOrderAnimating] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState('cod')
   const [isPaymentRedirecting, setIsPaymentRedirecting] = useState(false)
+  const [cashfreeLoaded, setCashfreeLoaded] = useState(false)
 
   useEffect(() => {
     if (!session) {
@@ -134,6 +136,11 @@ export default function CheckoutPage() {
   }
 
   const handleOnlinePayment = async () => {
+    if (!cashfreeLoaded) {
+      toast.error('Payment system is loading, please try again in a moment')
+      return
+    }
+
     setIsPaymentRedirecting(true)
     
     const paymentData = {
@@ -149,30 +156,79 @@ export default function CheckoutPage() {
 
     console.log('Initiating payment with data:', paymentData)
 
-    const res = await fetch('/api/payment/initiate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(paymentData)
-    })
+    try {
+      const res = await fetch('/api/payment/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(paymentData)
+      })
 
-    if (!res.ok) {
-      const errorData = await res.json()
-      throw new Error(errorData.error || 'Failed to initiate payment')
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to initiate payment')
+      }
+      
+      const paymentResponse = await res.json()
+      console.log('Payment initiated:', paymentResponse)
+      
+      if (!paymentResponse.success || !paymentResponse.paymentSessionId) {
+        throw new Error('Invalid payment session response')
+      }
+
+      // Clear cart before opening payment modal
+      updateCartCount()
+      
+      // Initialize Cashfree SDK
+      const cashfree = window.Cashfree({
+        mode: process.env.NEXT_PUBLIC_CASHFREE_ENVIRONMENT === 'production' ? 'production' : 'sandbox'
+      })
+      
+      // Configure checkout options
+      const checkoutOptions = {
+        paymentSessionId: paymentResponse.paymentSessionId,
+        redirectTarget: '_modal'
+      }
+      
+      console.log('Opening Cashfree payment modal with options:', checkoutOptions)
+      toast.success('Opening secure payment gateway...')
+      
+      // Open Cashfree payment modal
+      cashfree.checkout(checkoutOptions).then(function(result) {
+        console.log('Cashfree checkout result:', result)
+        
+        if (result.error) {
+          console.error('Payment error:', result.error)
+          toast.error(result.error.message || 'Payment failed. Please try again.')
+          setIsPaymentRedirecting(false)
+          setProcessing(false)
+        }
+        
+        if (result.redirect) {
+          console.log('Payment redirecting...')
+        }
+        
+        if (result.paymentDetails) {
+          console.log('Payment completed successfully:', result.paymentDetails)
+          toast.success('Payment completed successfully!')
+          
+          // Redirect to success page
+          setTimeout(() => {
+            router.push(`/payment/success?order_id=${paymentResponse.orderId}`)
+          }, 1000)
+        }
+      }).catch(function(error) {
+        console.error('Cashfree checkout error:', error)
+        toast.error('Payment initialization failed. Please try again.')
+        setIsPaymentRedirecting(false)
+        setProcessing(false)
+      })
+      
+    } catch (error) {
+      console.error('Payment initiation error:', error)
+      toast.error(error.message || 'Payment initiation failed')
+      setIsPaymentRedirecting(false)
+      setProcessing(false)
     }
-    
-    const paymentResponse = await res.json()
-    console.log('Payment initiated:', paymentResponse)
-    
-    // Clear cart before redirecting to payment
-    updateCartCount()
-    
-    // Redirect to Cashfree payment page
-    toast.success('Redirecting to secure payment gateway...')
-    
-    // Small delay for UX, then redirect
-    setTimeout(() => {
-      window.location.href = paymentResponse.paymentUrl
-    }, 1000)
   }
 
   if (loading) {
@@ -467,6 +523,19 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+
+      {/* Cashfree SDK Script */}
+      <Script
+        src="https://sdk.cashfree.com/js/v3/cashfree.js"
+        onLoad={() => {
+          console.log('Cashfree SDK loaded successfully')
+          setCashfreeLoaded(true)
+        }}
+        onError={() => {
+          console.error('Failed to load Cashfree SDK')
+          toast.error('Payment system failed to load. Please refresh the page.')
+        }}
+      />
 
     </main>
   )
