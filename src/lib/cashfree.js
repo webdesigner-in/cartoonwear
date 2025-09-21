@@ -80,13 +80,16 @@ const createPaymentSession = async (orderData) => {
       else if (response.data.payment_links && response.data.payment_links.web) {
         paymentUrl = response.data.payment_links.web
       }
-      // Last resort: Construct URL from payment_session_id
+      // For Cashfree v2023-08-01, use the direct payment session URL
       else if (response.data.payment_session_id) {
         const isProduction = process.env.CASHFREE_ENVIRONMENT === 'production'
-        const baseHost = isProduction ? 'payments.cashfree.com' : 'payments-test.cashfree.com'
-        paymentUrl = `https://${baseHost}/pay/${response.data.payment_session_id}`
+        if (isProduction) {
+          // Use Cashfree production payment page with session_id
+          paymentUrl = `https://payments.cashfree.com/pay/${response.data.payment_session_id}`
+        } else {
+          paymentUrl = `https://payments-test.cashfree.com/pay/${response.data.payment_session_id}`
+        }
       }
-        
       // Log all available fields for debugging
       console.log('Available response fields:', Object.keys(response.data))
       console.log('Payment URL determined:', paymentUrl)
