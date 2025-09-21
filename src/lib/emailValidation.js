@@ -5,6 +5,14 @@ const resolveMx = promisify(dns.resolveMx);
 
 // List of common disposable/temporary email domains to block
 const DISPOSABLE_DOMAINS = [
+  // Test domains (RFC 2606)
+  'example.com',
+  'example.org',
+  'example.net',
+  'test.com',
+  'localhost.localdomain',
+  
+  // Disposable/temporary email services
   '10minutemail.com',
   'tempmail.org',
   'guerrillamail.com',

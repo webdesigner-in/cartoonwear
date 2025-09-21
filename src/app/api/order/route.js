@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '../auth/[...nextauth]/route'
 import { prisma } from '@/lib/prisma'
-import { sendOrderConfirmationEmail } from '@/lib/email/orderNotifications'
+import { sendOrderConfirmationEmail } from '@/lib/emailService'
 
 // POST - Create new order
 export async function POST(request) {
@@ -130,11 +130,40 @@ export async function POST(request) {
 
     // Send order confirmation email
     try {
-      console.log(`Sending order confirmation email for order ${order.id}...`)
-      await sendOrderConfirmationEmail(order, initialPaymentStatus)
+      console.log(`📧 Sending order confirmation email for order ${order.id}...`)
+      
+      const orderData = {
+        orderNumber: order.id,
+        customerName: order.user.name,
+        customerEmail: order.user.email,
+        total: order.totalAmount,
+        items: order.items.map(item => ({
+          productName: item.product.name,
+          title: item.product.name,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        shippingAddress: {
+          fullName: order.address.fullName,
+          addressLine1: order.address.addressLine1,
+          addressLine2: order.address.addressLine2,
+          city: order.address.city,
+          state: order.address.state,
+          postalCode: order.address.postalCode,
+          phone: order.address.phone
+        },
+        createdAt: order.createdAt
+      }
+      
+      const emailResult = await sendOrderConfirmationEmail(orderData)
+      if (emailResult.success) {
+        console.log(`✅ Order confirmation email sent successfully to ${order.user.email}`);
+      } else {
+        console.error(`❌ Failed to send email: ${emailResult.error}`);
+      }
     } catch (emailError) {
       // Log email errors but don't fail the order creation
-      console.error('Failed to send order confirmation email:', emailError)
+      console.error('❌ Email sending error:', emailError)
     }
 
     return NextResponse.json({ order }, { status: 201 })

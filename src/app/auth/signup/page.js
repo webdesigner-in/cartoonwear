@@ -39,9 +39,28 @@ function SignUpPage() {
       return;
     }
     
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      toast.error('Password must be at least 6 characters long');
+    // Strong password validation
+    const passwordErrors = [];
+    if (password.length < 8) {
+      passwordErrors.push('at least 8 characters long');
+    }
+    if (!/[A-Z]/.test(password)) {
+      passwordErrors.push('one uppercase letter');
+    }
+    if (!/[a-z]/.test(password)) {
+      passwordErrors.push('one lowercase letter');
+    }
+    if (!/[0-9]/.test(password)) {
+      passwordErrors.push('one number');
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      passwordErrors.push('one special character (!@#$%^&*)');
+    }
+
+    if (passwordErrors.length > 0) {
+      const errorMsg = `Password must contain ${passwordErrors.join(', ')}`;
+      setError(errorMsg);
+      toast.error(errorMsg);
       setLoading(false);
       return;
     }
@@ -171,8 +190,13 @@ function SignUpPage() {
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
-              <div className="text-xs text-gray-500 mt-1">
-                Password must be at least 6 characters long
+              <div className="text-xs text-gray-500 mt-1 space-y-1">
+                <div>Password must contain:</div>
+                <ul className="ml-2 space-y-0.5">
+                  <li>• At least 8 characters</li>
+                  <li>• One uppercase & lowercase letter</li>
+                  <li>• One number & special character</li>
+                </ul>
               </div>
             </div>
 
