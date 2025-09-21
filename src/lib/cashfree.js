@@ -69,28 +69,35 @@ const createPaymentSession = async (orderData) => {
     console.log('Payment session response:', JSON.stringify(response.data, null, 2))
     
     if (response.data) {
-      // Use the payment_link from Cashfree response if available, otherwise construct redirect URL
+      // According to Cashfree v2023-08-01 API docs, use the payment_link from response
       let paymentUrl = null
       
-      if (response.data.payment_links && response.data.payment_links.web) {
-        // Use the official payment link provided by Cashfree
+      // Check for payment_link in the response (this is what the API should return)
+      if (response.data.payment_link) {
+        paymentUrl = response.data.payment_link
+      } 
+      // Fallback: Check for payment_links object
+      else if (response.data.payment_links && response.data.payment_links.web) {
         paymentUrl = response.data.payment_links.web
-      } else if (response.data.payment_session_id) {
-        // Fallback: Construct proper redirect URL to Cashfree checkout
+      }
+      // Last resort: Construct URL from payment_session_id
+      else if (response.data.payment_session_id) {
         const isProduction = process.env.CASHFREE_ENVIRONMENT === 'production'
-        if (isProduction) {
-          paymentUrl = `https://payments.cashfree.com/pay/checkout?session_id=${response.data.payment_session_id}`
-        } else {
-          paymentUrl = `https://payments-test.cashfree.com/pay/checkout?session_id=${response.data.payment_session_id}`
-        }
+        const baseHost = isProduction ? 'payments.cashfree.com' : 'payments-test.cashfree.com'
+        paymentUrl = `https://${baseHost}/pay/${response.data.payment_session_id}`
       }
         
+      // Log all available fields for debugging
+      console.log('Available response fields:', Object.keys(response.data))
+      console.log('Payment URL determined:', paymentUrl)
+      
       return {
         success: true,
         sessionId: response.data.payment_session_id,
         orderId: response.data.order_id,
         cfOrderId: response.data.cf_order_id,
-        paymentUrl: paymentUrl
+        paymentUrl: paymentUrl,
+        rawResponse: response.data // Include raw response for debugging
       }
     } else {
       throw new Error('Invalid response from Cashfree API')
