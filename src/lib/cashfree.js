@@ -36,21 +36,6 @@ const getCashfreeConfig = () => {
 
 // Create payment session
 const createPaymentSession = async (orderData) => {
-  // Development mode fallback when credentials don't work
-  const isDevelopmentMode = process.env.NODE_ENV !== 'production' && process.env.CASHFREE_DEV_MODE === 'true'
-  
-  if (isDevelopmentMode) {
-    console.log('🚧 DEVELOPMENT MODE: Simulating payment session creation')
-    console.log('Order data:', JSON.stringify(orderData, null, 2))
-    
-    // Simulate successful payment session creation
-    return {
-      success: true,
-      sessionId: `dev_session_${Date.now()}`,
-      orderId: orderData.orderId,
-      paymentUrl: `${process.env.NEXTAUTH_URL}/payment/success?order_id=${orderData.orderId}&dev_mode=true`
-    }
-  }
   
   try {
     const config = getCashfreeConfig()
@@ -66,8 +51,8 @@ const createPaymentSession = async (orderData) => {
         customer_phone: orderData.customerPhone,
       },
       order_meta: {
-        return_url: `${process.env.NEXTAUTH_URL}/payment/success?order_id={order_id}`,
-        notify_url: `${process.env.NEXTAUTH_URL}/api/payment/webhook`,
+        return_url: `https://www.thekroshetnani.com/payment/success?order_id={order_id}`,
+        notify_url: `https://www.thekroshetnani.com/api/payment/webhook`,
         payment_methods: 'cc,dc,upi,nb,app,paylater'
       }
     }
@@ -103,16 +88,9 @@ const createPaymentSession = async (orderData) => {
     console.error('Payment session creation failed:', error)
     console.error('Error details:', error.response?.data || error.message)
     
-    // Fallback to development mode if API fails
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('🚧 Falling back to development mode simulation')
-      return {
-        success: true,
-        sessionId: `fallback_session_${Date.now()}`,
-        orderId: orderData.orderId,
-        paymentUrl: `${process.env.NEXTAUTH_URL}/payment/success?order_id=${orderData.orderId}&dev_mode=true`
-      }
-    }
+    // Log error for debugging
+    console.error('Cashfree API Error - Full Response:', error.response?.data)
+    console.error('Cashfree API Error - Status:', error.response?.status)
     
     return {
       success: false,
