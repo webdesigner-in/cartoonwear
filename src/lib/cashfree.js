@@ -69,17 +69,19 @@ const createPaymentSession = async (orderData) => {
     console.log('Payment session response:', JSON.stringify(response.data, null, 2))
     
     if (response.data) {
-      // Use Cashfree's official payment URL pattern
-      // For API version 2023-08-01, the correct format is different
+      // Use the payment_link from Cashfree response if available, otherwise construct redirect URL
       let paymentUrl = null
       
-      if (response.data.payment_session_id) {
+      if (response.data.payment_links && response.data.payment_links.web) {
+        // Use the official payment link provided by Cashfree
+        paymentUrl = response.data.payment_links.web
+      } else if (response.data.payment_session_id) {
+        // Fallback: Construct proper redirect URL to Cashfree checkout
         const isProduction = process.env.CASHFREE_ENVIRONMENT === 'production'
         if (isProduction) {
-          // Use the correct Cashfree production checkout URL
-          paymentUrl = `https://api.cashfree.com/pg/view/sessions/checkout/${response.data.payment_session_id}`
+          paymentUrl = `https://payments.cashfree.com/pay/checkout?session_id=${response.data.payment_session_id}`
         } else {
-          paymentUrl = `https://sandbox.cashfree.com/pg/view/sessions/checkout/${response.data.payment_session_id}`
+          paymentUrl = `https://payments-test.cashfree.com/pay/checkout?session_id=${response.data.payment_session_id}`
         }
       }
         
