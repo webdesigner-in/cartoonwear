@@ -29,7 +29,31 @@ export default function RootLayout({ children }) {
       >
         <SessionProviderWrapper>
           <CartProvider>
-            <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
+            <Toaster 
+              position="bottom-right" 
+              toastOptions={{ 
+                duration: 3000,
+                style: {
+                  borderRadius: '8px',
+                  background: '#363636',
+                  color: '#fff',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                },
+                success: {
+                  iconTheme: {
+                    primary: '#10b981',
+                    secondary: '#fff'
+                  }
+                },
+                error: {
+                  iconTheme: {
+                    primary: '#ef4444',
+                    secondary: '#fff'
+                  }
+                }
+              }} 
+            />
             <div className="flex flex-col min-h-screen">
               <Header />
               <main className="flex-1">
