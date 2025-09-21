@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 
 export const authOptions = {
-  // Removed PrismaAdapter to manually control user creation with proper roles
+  adapter: PrismaAdapter(prisma),
   providers: [
     // Email and Password Provider
     CredentialsProvider({
@@ -70,26 +70,18 @@ export const authOptions = {
   },
   
   callbacks: {
-    async jwt({ token, user, account }) {
-      // If this is a new login, fetch user data from database
+    async jwt({ token, user }) {
+      // Add user role to token
       if (user) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: user.email },
-          select: { id: true, role: true, isActive: true }
-        })
-        
-        if (dbUser) {
-          token.role = dbUser.role
-          token.userId = dbUser.id
-          token.isActive = dbUser.isActive
-        }
+        token.role = user.role
+        token.isActive = user.isActive
       }
       return token
     },
     
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.userId || token.sub
+        session.user.id = token.sub
         session.user.role = token.role
         session.user.isActive = token.isActive
       }
@@ -99,41 +91,16 @@ export const authOptions = {
     async signIn({ user, account, profile }) {
       if (account.provider === 'google') {
         try {
-          // Check if user exists
+          // Check if existing user is active
           const existingUser = await prisma.user.findUnique({
             where: { email: user.email }
           })
           
-          if (existingUser) {
-            // User exists - check if active
-            if (!existingUser.isActive) {
-              console.log(`Blocked inactive user login attempt: ${user.email}`)
-              return false
-            }
-            // Update user info if needed
-            if (existingUser.name !== user.name || existingUser.image !== user.image) {
-              await prisma.user.update({
-                where: { email: user.email },
-                data: {
-                  name: user.name,
-                  image: user.image
-                }
-              })
-            }
-          } else {
-            // New user - create with CUSTOMER role
-            console.log(`Creating new Google OAuth user: ${user.email}`)
-            await prisma.user.create({
-              data: {
-                email: user.email,
-                name: user.name,
-                image: user.image,
-                role: 'CUSTOMER', // Explicitly set role to CUSTOMER
-                isActive: true,
-                emailVerified: new Date() // Mark as verified since it's from Google
-              }
-            })
+          if (existingUser && !existingUser.isActive) {
+            console.log(`Blocked inactive user login attempt: ${user.email}`)
+            return false
           }
+          
           return true
         } catch (error) {
           console.error('Google OAuth sign-in error:', error)
@@ -141,6 +108,25 @@ export const authOptions = {
         }
       }
       return true
+    }
+  },
+  
+  events: {
+    async createUser({ user }) {
+      // Fix role for new users created by PrismaAdapter
+      // PrismaAdapter creates users with default schema values, so we need to fix them
+      try {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { 
+            role: 'CUSTOMER',  // Ensure new users get CUSTOMER role
+            isActive: true     // Ensure they're active
+          }
+        })
+        console.log(`✅ Set CUSTOMER role for new user: ${user.email}`)
+      } catch (error) {
+        console.error('❌ Error setting user role:', error)
+      }
     }
   },
   
