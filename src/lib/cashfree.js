@@ -69,13 +69,17 @@ const createPaymentSession = async (orderData) => {
     console.log('Payment session response:', JSON.stringify(response.data, null, 2))
     
     if (response.data) {
-      // For Cashfree API 2023-08-01, use the session endpoint
+      // Use Cashfree's official payment URL pattern
+      // For API version 2023-08-01, the correct format is different
       let paymentUrl = null
       
       if (response.data.payment_session_id) {
         const isProduction = process.env.CASHFREE_ENVIRONMENT === 'production'
-        const paymentsHost = isProduction ? 'payments.cashfree.com' : 'payments-test.cashfree.com'
-        paymentUrl = `https://${paymentsHost}/session/${response.data.payment_session_id}`
+        if (isProduction) {
+          paymentUrl = `https://checkout.cashfree.com/payments/form#${response.data.payment_session_id}`
+        } else {
+          paymentUrl = `https://sandbox.cashfree.com/billpay/checkout/post/submit/${response.data.payment_session_id}`
+        }
       }
         
       return {
