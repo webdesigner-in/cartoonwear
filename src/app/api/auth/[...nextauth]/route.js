@@ -1,7 +1,6 @@
 import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
-import GitHubProvider from 'next-auth/providers/github'
 import { PrismaAdapter } from '@next-auth/prisma-adapter'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
@@ -33,7 +32,7 @@ export const authOptions = {
           }
           
           if (!user.password) {
-            throw new Error('This account was created with social login. Please use Google or GitHub to sign in');
+            throw new Error('This account was created with social login. Please use Google to sign in');
           }
 
           const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
@@ -64,12 +63,6 @@ export const authOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
-    
-    // GitHub Provider
-    GitHubProvider({
-      clientId: process.env.GITHUB_ID,
-      clientSecret: process.env.GITHUB_SECRET,
-    }),
   ],
   
   session: {
@@ -93,7 +86,7 @@ export const authOptions = {
     },
     
     async signIn({ user, account, profile }) {
-      if (account.provider === 'google' || account.provider === 'github') {
+      if (account.provider === 'google') {
         // Check if user exists and is active
         const existingUser = await prisma.user.findUnique({
           where: { email: user.email }
