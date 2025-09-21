@@ -3,12 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack --port 3000",
+    "dev": "dotenv -e .env.local -- next dev --turbopack --port 3000",
     "build": "npx prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "db:seed": "node prisma/seed.js",
-    "db:reset": "npx prisma db push --force-reset && npm run db:seed",
+    "db:push": "dotenv -e .env.local -- npx prisma db push",
+    "db:seed": "dotenv -e .env.local -- node prisma/seed.js",
+    "db:reset": "dotenv -e .env.local -- npx prisma db push --force-reset && npm run db:seed",
+    "db:studio": "dotenv -e .env.local -- npx prisma studio",
+    "db:migrate": "dotenv -e .env.local -- npx prisma migrate dev",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -34,6 +37,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "dotenv-cli": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.3",
     "tailwindcss": "^4"
