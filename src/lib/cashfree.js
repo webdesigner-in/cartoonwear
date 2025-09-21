@@ -76,10 +76,10 @@ const createPaymentSession = async (orderData) => {
       if (response.data.payment_session_id) {
         const isProduction = process.env.CASHFREE_ENVIRONMENT === 'production'
         if (isProduction) {
-          // Use the correct Cashfree production payment URL format
-          paymentUrl = `https://payments.cashfree.com/forms/${response.data.payment_session_id}`
+          // Use the correct Cashfree production checkout URL
+          paymentUrl = `https://api.cashfree.com/pg/view/sessions/checkout/${response.data.payment_session_id}`
         } else {
-          paymentUrl = `https://payments-test.cashfree.com/forms/${response.data.payment_session_id}`
+          paymentUrl = `https://sandbox.cashfree.com/pg/view/sessions/checkout/${response.data.payment_session_id}`
         }
       }
         
